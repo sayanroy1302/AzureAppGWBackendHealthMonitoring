@@ -10,5 +10,6 @@ You can use the code view and upload this code, but you have to edit the code to
 5. Use the Managed Identity for HTTP step for authentication. 
 6. Configure the alert to trigger logicApp
 
-![image](https://github.com/sayanroy1302/AzureAppGWBackendHealthMonitoring/assets/141024289/010dec41-9d0c-4f97-b8a1-c603da9f698e)
+![image](https://github.com/sayanroy1302/AzureAppGWBackendHealthMonitoring/assets/141024289/2d2ca0f7-f985-4620-a2d8-b92ca5151626)
+
 
