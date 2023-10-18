@@ -15,6 +15,10 @@ You can customize the alert notification by extracting information about the aff
 
 ![image](https://github.com/sayanroy1302/AzureAppGWBackendHealthMonitoring/assets/141024289/b1060a70-0bc6-4032-a9ec-be059c69b067)
 
+![image](https://github.com/sayanroy1302/AzureAppGWBackendHealthMonitoring/assets/141024289/9f22cb94-853c-413f-9a35-991aa3203d65)
+
+![image](https://github.com/sayanroy1302/AzureAppGWBackendHealthMonitoring/assets/141024289/3e8c9592-30f5-4be9-91f2-48169681daf6)
+
 ![image](https://github.com/sayanroy1302/AzureAppGWBackendHealthMonitoring/assets/141024289/38c932e4-29c8-4602-8b99-24b73002f18b)
 
 ![image](https://github.com/sayanroy1302/AzureAppGWBackendHealthMonitoring/assets/141024289/d747c6ac-f682-4ca2-a1e4-995212156b5f)
