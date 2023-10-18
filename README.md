@@ -3,15 +3,16 @@
 Azure Application Gateway backend health check server unhealth status is not stored in metrics. Following Logic App code can be used to create a Logic App which can be triggered whenever there is an alert for backend host unhealth count > 0 and ingest logs into a custom table in Log Analytics workspace. 
 
 You can use the code view and upload this code, but you have to edit the code to create a log analytics connector and Managed Identity for Logic App which has sufficient privileges to query Application Gateway backend health.
-1. Upload the attached code to logic app.
+1. Upload the attached code to logic app and Save it. Go to designer view to see the entire workflow. 
 2. Copy the send data step code.
-3. Create a new Send data step with connection and paste the send data code. 
+3. Create a new Send data step with connection and paste the send data code. Reference: https://learn.microsoft.com/en-us/connectors/azureloganalyticsdatacollector/#send-data
 4. Create Managed Identity for logic app and give sufficient permissions for the same.
-5. Use the Managed Identity for HTTP step for authentication. 
-6. Configure the alert to trigger logicApp
+5. Use the Managed Identity for HTTP steps for authentication. Reference: https://learn.microsoft.com/en-us/azure/logic-apps/create-managed-service-identity?tabs=consumption
+6. Configure the alert to trigger LogicApp in Azure Monitor with condition Unhealthy Host Count > 0 for Application Gateway metrics. 
 
 Check here for common alert schema to be used in Logic App: https://learn.microsoft.com/en-us/azure/azure-monitor/alerts/alerts-logic-apps?tabs=send-email
 You can customize the alert notification by extracting information about the affected resource on which the alert fired, for example, the resourceID, resource group, subscription ID. 
+
 
 ![image](https://github.com/sayanroy1302/AzureAppGWBackendHealthMonitoring/assets/141024289/b1060a70-0bc6-4032-a9ec-be059c69b067)
 
