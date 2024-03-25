@@ -131,11 +131,11 @@
                                         "inputs": {
                                             "body": "{ \"Application Gateway\": \"@{variables('AppGWName')}\", \"Subscription\": \"@{variables('SubID')}\", \"Resource Group\":\"@{variables('ResourceGroup')}\", \"Backend HTTP Setting\":\"@{items('For_each_2')?['backendHttpSettings']?['id']}\", \"Backendpool\": \"@{items('For_each')?['backendAddressPool']?['id']}\", \"Server\":\"@{items('For_each_3')?['address']}\", \"Health\": \"@{items('For_each_3')?['health']}\" , \"Health Probe Log\":\"@{items('For_each_3')?['healthProbeLog']}\"}",
                                             "headers": {
-                                                "Log-Type": "appgwHealth"
+                                                "Log-Type": "AppGWBackendHealth"
                                             },
                                             "host": {
                                                 "connection": {
-                                                    "name": "@parameters('$connections')['azureloganalyticsdatacollector_2']['connectionId']"
+                                                    "name": "@parameters('$connections')['azureloganalyticsdatacollector']['connectionId']"
                                                 }
                                             },
                                             "method": "post",
@@ -170,7 +170,7 @@
                         "type": "ManagedServiceIdentity"
                     },
                     "method": "POST",
-                    "uri": "https://management.azure.com/subscriptions/@{variables('SubID')}/resourceGroups/@{variables('ResourceGroup')}/providers/Microsoft.Network/applicationGateways/@{variables('AppGWName')}/backendhealth?api-version=2022-07-01"
+                    "uri": "https://management.azure.com/subscriptions/@{variables('SubID')}/resourceGroups/@{variables('ResourceGroup')}/providers/Microsoft.Network/applicationGateways/@{variables('AppGWName')}/backendhealth?api-version=2023-09-01"
                 },
                 "runAfter": {
                     "Initialize_Location_Header": [
@@ -297,76 +297,89 @@
                     "content": "@variables('ResponseBody')",
                     "schema": {
                         "properties": {
-                            "backendAddressPools": {
-                                "items": {
-                                    "properties": {
-                                        "backendAddressPool": {
-                                            "properties": {
-                                                "id": {
-                                                    "type": "string"
-                                                }
-                                            },
-                                            "type": "object"
-                                        },
-                                        "backendHttpSettingsCollection": {
-                                            "items": {
-                                                "properties": {
-                                                    "backendHttpSettings": {
-                                                        "properties": {
-                                                            "id": {
-                                                                "type": "string"
-                                                            }
-                                                        },
-                                                        "type": "object"
-                                                    },
-                                                    "servers": {
-                                                        "items": {
+                            "body": {
+                                "properties": {
+                                    "name": {
+                                        "type": "string"
+                                    },
+                                    "value": {
+                                        "properties": {
+                                            "backendAddressPools": {
+                                                "items": {
+                                                    "properties": {
+                                                        "backendAddressPool": {
                                                             "properties": {
-                                                                "address": {
+                                                                "id": {
                                                                     "type": "string"
-                                                                },
-                                                                "health": {
-                                                                    "type": "string"
-                                                                },
-                                                                "healthProbeLog": {
-                                                                    "type": "string"
-                                                                },
-                                                                "ipConfiguration": {
-                                                                    "properties": {
-                                                                        "id": {
-                                                                            "type": "string"
-                                                                        }
-                                                                    },
-                                                                    "type": "object"
                                                                 }
                                                             },
-                                                            "required": [
-                                                                "address",
-                                                                "ipConfiguration",
-                                                                "health",
-                                                                "healthProbeLog"
-                                                            ],
                                                             "type": "object"
                                                         },
-                                                        "type": "array"
-                                                    }
+                                                        "backendHttpSettingsCollection": {
+                                                            "items": {
+                                                                "properties": {
+                                                                    "backendHttpSettings": {
+                                                                        "properties": {
+                                                                            "id": {
+                                                                                "type": "string"
+                                                                            }
+                                                                        },
+                                                                        "type": "object"
+                                                                    },
+                                                                    "servers": {
+                                                                        "items": {
+                                                                            "properties": {
+                                                                                "address": {
+                                                                                    "type": "string"
+                                                                                },
+                                                                                "health": {
+                                                                                    "type": "string"
+                                                                                },
+                                                                                "healthProbeLog": {
+                                                                                    "type": "string"
+                                                                                },
+                                                                                "ipConfiguration": {
+                                                                                    "properties": {
+                                                                                        "id": {
+                                                                                            "type": "string"
+                                                                                        }
+                                                                                    },
+                                                                                    "type": "object"
+                                                                                }
+                                                                            },
+                                                                            "required": [
+                                                                                "address",
+                                                                                "ipConfiguration",
+                                                                                "health",
+                                                                                "healthProbeLog"
+                                                                            ],
+                                                                            "type": "object"
+                                                                        },
+                                                                        "type": "array"
+                                                                    }
+                                                                },
+                                                                "required": [
+                                                                    "backendHttpSettings",
+                                                                    "servers"
+                                                                ],
+                                                                "type": "object"
+                                                            },
+                                                            "type": "array"
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "backendAddressPool",
+                                                        "backendHttpSettingsCollection"
+                                                    ],
+                                                    "type": "object"
                                                 },
-                                                "required": [
-                                                    "backendHttpSettings",
-                                                    "servers"
-                                                ],
-                                                "type": "object"
-                                            },
-                                            "type": "array"
-                                        }
-                                    },
-                                    "required": [
-                                        "backendAddressPool",
-                                        "backendHttpSettingsCollection"
-                                    ],
-                                    "type": "object"
+                                                "type": "array"
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
                                 },
-                                "type": "array"
+                                "type": "object"
                             }
                         },
                         "type": "object"
@@ -570,7 +583,7 @@
     },
     "parameters": {
         "$connections": {
-            
+			
         }
     }
 }
