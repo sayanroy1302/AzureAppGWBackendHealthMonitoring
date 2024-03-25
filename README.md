@@ -5,7 +5,7 @@ Azure Application Gateway backend health check server unhealth status is not sto
 You can use the code view and upload this code, but you have to edit the code to create a log analytics connector and Managed Identity for Logic App which has sufficient privileges to query Application Gateway backend health.
 1. Upload the attached code to logic app and Save it. Go to designer view to see the entire workflow. 
 2. Copy the send data step code.
-3. Create a new Send data step with connection and paste the send data code. Reference: https://learn.microsoft.com/en-us/connectors/azureloganalyticsdatacollector/#send-data
+3. Create a new Send data step with connection and paste the send data code. Create a new Azure Log Analytics Data Collector connection or use an existing connection. Reference: https://learn.microsoft.com/en-us/connectors/azureloganalyticsdatacollector/#send-data
 4. Create Managed Identity for logic app and give sufficient permissions for the same.
 5. Use the Managed Identity for HTTP steps for authentication. Reference: https://learn.microsoft.com/en-us/azure/logic-apps/create-managed-service-identity?tabs=consumption
 6. Configure the alert to trigger LogicApp in Azure Monitor with condition Unhealthy Host Count > 0 for Application Gateway metrics. 
