@@ -1,0 +1,589 @@
+{
+    "definition": {
+        "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+        "actions": {
+            "Condition": {
+                "actions": {
+                    "Set_Response_body": {
+                        "inputs": {
+                            "name": "ResponseBody",
+                            "value": "@body('HTTP')"
+                        },
+                        "runAfter": {
+                            "Set_final_response_yes": [
+                                "Succeeded"
+                            ]
+                        },
+                        "type": "SetVariable"
+                    },
+                    "Set_final_response_yes": {
+                        "inputs": {
+                            "name": "finalResponse",
+                            "value": true
+                        },
+                        "runAfter": {},
+                        "type": "SetVariable"
+                    }
+                },
+                "else": {
+                    "actions": {
+                        "Set_location": {
+                            "inputs": {
+                                "name": "location",
+                                "value": "@{outputs('HTTP')['headers']?['Location']}"
+                            },
+                            "runAfter": {},
+                            "type": "SetVariable"
+                        },
+                        "Until": {
+                            "actions": {
+                                "Condition_2": {
+                                    "actions": {
+                                        "Set_ResponseBody": {
+                                            "inputs": {
+                                                "name": "ResponseBody",
+                                                "value": "@body('HTTP_2')"
+                                            },
+                                            "runAfter": {
+                                                "Set_final_response": [
+                                                    "Succeeded"
+                                                ]
+                                            },
+                                            "type": "SetVariable"
+                                        },
+                                        "Set_final_response": {
+                                            "inputs": {
+                                                "name": "finalResponse",
+                                                "value": true
+                                            },
+                                            "runAfter": {},
+                                            "type": "SetVariable"
+                                        }
+                                    },
+                                    "expression": {
+                                        "and": [
+                                            {
+                                                "equals": [
+                                                    "@outputs('HTTP_2')['statusCode']",
+                                                    200
+                                                ]
+                                            }
+                                        ]
+                                    },
+                                    "runAfter": {
+                                        "HTTP_2": [
+                                            "Succeeded"
+                                        ]
+                                    },
+                                    "type": "If"
+                                },
+                                "HTTP_2": {
+                                    "inputs": {
+                                        "authentication": {
+                                            "identity": "",
+                                            "type": "ManagedServiceIdentity"
+                                        },
+                                        "method": "GET",
+                                        "uri": "@variables('location')"
+                                    },
+                                    "runAfter": {},
+                                    "type": "Http"
+                                }
+                            },
+                            "expression": "@equals(variables('finalResponse'), true)",
+                            "limit": {
+                                "count": 60,
+                                "timeout": "PT1H"
+                            },
+                            "runAfter": {
+                                "Set_location": [
+                                    "Succeeded"
+                                ]
+                            },
+                            "type": "Until"
+                        }
+                    }
+                },
+                "expression": {
+                    "and": [
+                        {
+                            "equals": [
+                                "@outputs('HTTP')['statusCode']",
+                                200
+                            ]
+                        }
+                    ]
+                },
+                "runAfter": {
+                    "HTTP": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "If"
+            },
+            "For_each": {
+                "actions": {
+                    "For_each_2": {
+                        "actions": {
+                            "For_each_3": {
+                                "actions": {
+                                    "Send_Data": {
+                                        "inputs": {
+                                            "body": "{ \"Application Gateway\": \"@{variables('AppGWName')}\", \"Subscription\": \"@{variables('SubID')}\", \"Resource Group\":\"@{variables('ResourceGroup')}\", \"Backend HTTP Setting\":\"@{items('For_each_2')?['backendHttpSettings']?['id']}\", \"Backendpool\": \"@{items('For_each')?['backendAddressPool']?['id']}\", \"Server\":\"@{items('For_each_3')?['address']}\", \"Health\": \"@{items('For_each_3')?['health']}\" , \"Health Probe Log\":\"@{items('For_each_3')?['healthProbeLog']}\"}",
+                                            "headers": {
+                                                "Log-Type": "AppGWBackendHealth"
+                                            },
+                                            "host": {
+                                                "connection": {
+                                                    "name": "@parameters('$connections')['azureloganalyticsdatacollector']['connectionId']"
+                                                }
+                                            },
+                                            "method": "post",
+                                            "path": "/api/logs"
+                                        },
+                                        "runAfter": {},
+                                        "type": "ApiConnection"
+                                    }
+                                },
+                                "foreach": "@items('For_each_2')?['servers']",
+                                "runAfter": {},
+                                "type": "Foreach"
+                            }
+                        },
+                        "foreach": "@items('For_each')?['backendHttpSettingsCollection']",
+                        "runAfter": {},
+                        "type": "Foreach"
+                    }
+                },
+                "foreach": "@body('Parse_JSON')?['backendAddressPools']",
+                "runAfter": {
+                    "Parse_JSON": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "Foreach"
+            },
+            "HTTP": {
+                "inputs": {
+                    "authentication": {
+                        "identity": "",
+                        "type": "ManagedServiceIdentity"
+                    },
+                    "method": "POST",
+                    "uri": "https://management.azure.com/subscriptions/@{variables('SubID')}/resourceGroups/@{variables('ResourceGroup')}/providers/Microsoft.Network/applicationGateways/@{variables('AppGWName')}/backendhealth?api-version=2023-09-01"
+                },
+                "runAfter": {
+                    "Initialize_Location_Header": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "Http"
+            },
+            "Initialize_AffectedResources": {
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "AffectedResources",
+                            "type": "array",
+                            "value": "@split(triggerBody()?['data']?['essentials']?['alertTargetIDs'][0], '/')"
+                        }
+                    ]
+                },
+                "runAfter": {},
+                "type": "InitializeVariable"
+            },
+            "Initialize_App_GW_Name": {
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "AppGWName",
+                            "type": "string",
+                            "value": "@{variables('AffectedResources')[8]}"
+                        }
+                    ]
+                },
+                "runAfter": {
+                    "Initialize_Subscription_ID": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "InitializeVariable"
+            },
+            "Initialize_Location_Header": {
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "location",
+                            "type": "string"
+                        }
+                    ]
+                },
+                "runAfter": {
+                    "Initialize_App_GW_Name": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "InitializeVariable"
+            },
+            "Initialize_Resource_Group": {
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "ResourceGroup",
+                            "type": "string",
+                            "value": "@{variables('AffectedResources')[4]}"
+                        }
+                    ]
+                },
+                "runAfter": {
+                    "Initialize_Response_Body": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "InitializeVariable"
+            },
+            "Initialize_Response_Body": {
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "ResponseBody",
+                            "type": "object"
+                        }
+                    ]
+                },
+                "runAfter": {
+                    "Initialize_finalResponse": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "InitializeVariable"
+            },
+            "Initialize_Subscription_ID": {
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "SubID",
+                            "type": "string",
+                            "value": "@{variables('AffectedResources')[2]}"
+                        }
+                    ]
+                },
+                "runAfter": {
+                    "Initialize_Resource_Group": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "InitializeVariable"
+            },
+            "Initialize_finalResponse": {
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "finalResponse",
+                            "type": "boolean",
+                            "value": false
+                        }
+                    ]
+                },
+                "runAfter": {
+                    "Initialize_AffectedResources": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "InitializeVariable"
+            },
+            "Parse_JSON": {
+                "inputs": {
+                    "content": "@variables('ResponseBody')",
+                    "schema": {
+                        "properties": {
+                            "body": {
+                                "properties": {
+                                    "name": {
+                                        "type": "string"
+                                    },
+                                    "value": {
+                                        "properties": {
+                                            "backendAddressPools": {
+                                                "items": {
+                                                    "properties": {
+                                                        "backendAddressPool": {
+                                                            "properties": {
+                                                                "id": {
+                                                                    "type": "string"
+                                                                }
+                                                            },
+                                                            "type": "object"
+                                                        },
+                                                        "backendHttpSettingsCollection": {
+                                                            "items": {
+                                                                "properties": {
+                                                                    "backendHttpSettings": {
+                                                                        "properties": {
+                                                                            "id": {
+                                                                                "type": "string"
+                                                                            }
+                                                                        },
+                                                                        "type": "object"
+                                                                    },
+                                                                    "servers": {
+                                                                        "items": {
+                                                                            "properties": {
+                                                                                "address": {
+                                                                                    "type": "string"
+                                                                                },
+                                                                                "health": {
+                                                                                    "type": "string"
+                                                                                },
+                                                                                "healthProbeLog": {
+                                                                                    "type": "string"
+                                                                                },
+                                                                                "ipConfiguration": {
+                                                                                    "properties": {
+                                                                                        "id": {
+                                                                                            "type": "string"
+                                                                                        }
+                                                                                    },
+                                                                                    "type": "object"
+                                                                                }
+                                                                            },
+                                                                            "required": [
+                                                                                "address",
+                                                                                "ipConfiguration",
+                                                                                "health",
+                                                                                "healthProbeLog"
+                                                                            ],
+                                                                            "type": "object"
+                                                                        },
+                                                                        "type": "array"
+                                                                    }
+                                                                },
+                                                                "required": [
+                                                                    "backendHttpSettings",
+                                                                    "servers"
+                                                                ],
+                                                                "type": "object"
+                                                            },
+                                                            "type": "array"
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "backendAddressPool",
+                                                        "backendHttpSettingsCollection"
+                                                    ],
+                                                    "type": "object"
+                                                },
+                                                "type": "array"
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        },
+                        "type": "object"
+                    }
+                },
+                "runAfter": {
+                    "Condition": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "ParseJson"
+            }
+        },
+        "contentVersion": "1.0.0.0",
+        "outputs": {},
+        "parameters": {
+            "$connections": {
+                "defaultValue": {},
+                "type": "Object"
+            }
+        },
+        "triggers": {
+            "manual": {
+                "inputs": {
+                    "schema": {
+                        "properties": {
+                            "properties": {
+                                "properties": {
+                                    "data": {
+                                        "properties": {
+                                            "properties": {
+                                                "properties": {
+                                                    "alertContext": {
+                                                        "properties": {
+                                                            "properties": {
+                                                                "properties": {},
+                                                                "type": "object"
+                                                            },
+                                                            "type": {
+                                                                "type": "string"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    },
+                                                    "essentials": {
+                                                        "properties": {
+                                                            "properties": {
+                                                                "properties": {
+                                                                    "alertContextVersion": {
+                                                                        "properties": {
+                                                                            "type": {
+                                                                                "type": "string"
+                                                                            }
+                                                                        },
+                                                                        "type": "object"
+                                                                    },
+                                                                    "alertId": {
+                                                                        "properties": {
+                                                                            "type": {
+                                                                                "type": "string"
+                                                                            }
+                                                                        },
+                                                                        "type": "object"
+                                                                    },
+                                                                    "alertRule": {
+                                                                        "properties": {
+                                                                            "type": {
+                                                                                "type": "string"
+                                                                            }
+                                                                        },
+                                                                        "type": "object"
+                                                                    },
+                                                                    "alertTargetIDs": {
+                                                                        "properties": {
+                                                                            "items": {
+                                                                                "properties": {
+                                                                                    "type": {
+                                                                                        "type": "string"
+                                                                                    }
+                                                                                },
+                                                                                "type": "object"
+                                                                            },
+                                                                            "type": {
+                                                                                "type": "string"
+                                                                            }
+                                                                        },
+                                                                        "type": "object"
+                                                                    },
+                                                                    "description": {
+                                                                        "properties": {
+                                                                            "type": {
+                                                                                "type": "string"
+                                                                            }
+                                                                        },
+                                                                        "type": "object"
+                                                                    },
+                                                                    "essentialsVersion": {
+                                                                        "properties": {
+                                                                            "type": {
+                                                                                "type": "string"
+                                                                            }
+                                                                        },
+                                                                        "type": "object"
+                                                                    },
+                                                                    "firedDateTime": {
+                                                                        "properties": {
+                                                                            "type": {
+                                                                                "type": "string"
+                                                                            }
+                                                                        },
+                                                                        "type": "object"
+                                                                    },
+                                                                    "monitorCondition": {
+                                                                        "properties": {
+                                                                            "type": {
+                                                                                "type": "string"
+                                                                            }
+                                                                        },
+                                                                        "type": "object"
+                                                                    },
+                                                                    "monitoringService": {
+                                                                        "properties": {
+                                                                            "type": {
+                                                                                "type": "string"
+                                                                            }
+                                                                        },
+                                                                        "type": "object"
+                                                                    },
+                                                                    "originAlertId": {
+                                                                        "properties": {
+                                                                            "type": {
+                                                                                "type": "string"
+                                                                            }
+                                                                        },
+                                                                        "type": "object"
+                                                                    },
+                                                                    "resolvedDateTime": {
+                                                                        "properties": {
+                                                                            "type": {
+                                                                                "type": "string"
+                                                                            }
+                                                                        },
+                                                                        "type": "object"
+                                                                    },
+                                                                    "severity": {
+                                                                        "properties": {
+                                                                            "type": {
+                                                                                "type": "string"
+                                                                            }
+                                                                        },
+                                                                        "type": "object"
+                                                                    },
+                                                                    "signalType": {
+                                                                        "properties": {
+                                                                            "type": {
+                                                                                "type": "string"
+                                                                            }
+                                                                        },
+                                                                        "type": "object"
+                                                                    }
+                                                                },
+                                                                "type": "object"
+                                                            },
+                                                            "type": {
+                                                                "type": "string"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            },
+                                            "type": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "type": "object"
+                                    },
+                                    "schemaId": {
+                                        "properties": {
+                                            "type": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                },
+                                "type": "object"
+                            },
+                            "type": {
+                                "type": "string"
+                            }
+                        },
+                        "type": "object"
+                    }
+                },
+                "kind": "Http",
+                "type": "Request"
+            }
+        }
+    },
+    "parameters": {
+        "$connections": {
+			
+        }
+    }
+}
